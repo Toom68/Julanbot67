@@ -1,0 +1,33 @@
+services:
+  - type: web
+    name: julina-dashboard
+    env: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/status
+    envVars:
+      - key: DISCORD_BOT_TOKEN
+        sync: false
+      - key: GOOGLE_SHEET_ID
+        sync: false
+      - key: GOOGLE_OAUTH_CREDENTIALS_JSON
+        sync: false
+      - key: GOOGLE_OAUTH_TOKEN_JSON
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-2.0-flash
+      - key: GOOGLE_SHEET_NAME
+        value: Messages
+      - key: GOOGLE_PEOPLE_SHEET_NAME
+        value: People
+      - key: GOOGLE_KNOWLEDGE_SHEET_NAME
+        value: Knowledge
+      - key: GOOGLE_JULIAN_SCANS_SHEET_NAME
+        value: JulianScans
+      - key: JULIAN_ALLOWED_USER_IDS
+        sync: false
+      - key: DASHBOARD_HOST
+        value: 0.0.0.0

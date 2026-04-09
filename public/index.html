@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Discord Knowledge Dashboard</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">Discord Logger Dashboard</p>
+          <h1>Messages and Knowledge Bank</h1>
+          <p class="subtitle">Browse raw logs and remembered facts without opening Google Sheets.</p>
+        </div>
+        <div class="status-card">
+          <span class="status-label">Status</span>
+          <strong id="statusText">Loading...</strong>
+        </div>
+      </header>
+
+      <section class="toolbar">
+        <div class="search-wrap">
+          <input id="searchInput" type="search" placeholder="Search sender, message, fact, channel..." />
+        </div>
+        <div class="tab-group">
+          <button class="tab-button active" data-tab="messages">Messages</button>
+          <button class="tab-button" data-tab="knowledge">Knowledge</button>
+        </div>
+      </section>
+
+      <main>
+        <section id="messagesTab" class="tab-panel active">
+          <div class="panel-header">
+            <h2>Message Log</h2>
+            <span id="messageCount" class="count-pill">0</span>
+          </div>
+          <div id="messagesEmpty" class="empty-state hidden">No messages match your current search.</div>
+          <div id="messagesList" class="card-grid"></div>
+        </section>
+
+        <section id="knowledgeTab" class="tab-panel">
+          <div class="panel-header">
+            <h2>Knowledge Bank</h2>
+            <span id="knowledgeCount" class="count-pill">0</span>
+          </div>
+          <div id="knowledgeEmpty" class="empty-state hidden">No knowledge entries match your current search.</div>
+          <div id="knowledgeList" class="card-grid"></div>
+        </section>
+      </main>
+    </div>
+
+    <template id="messageCardTemplate">
+      <article class="card">
+        <div class="card-topline">
+          <span class="sender"></span>
+          <time class="timestamp"></time>
+        </div>
+        <p class="message-text"></p>
+        <div class="media-groups"></div>
+      </article>
+    </template>
+
+    <template id="knowledgeCardTemplate">
+      <article class="card">
+        <div class="card-topline">
+          <span class="sender"></span>
+          <span class="category"></span>
+        </div>
+        <p class="fact-text"></p>
+        <div class="knowledge-meta"></div>
+        <p class="source-text"></p>
+      </article>
+    </template>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

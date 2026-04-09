@@ -1,0 +1,6 @@
+node_modules/
+.env
+service-account.json
+google-oauth-token.json
+client_secret*.json
+google-cred.json
