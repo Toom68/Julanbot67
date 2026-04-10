@@ -1863,6 +1863,33 @@ function parseJsonEnv(envVarName) {
   }
 }
 
+function isLikelyGibberishText(value) {
+  const normalized = value.trim().toLowerCase();
+
+  if (normalized.length < 6 || normalized.length > 24) {
+    return false;
+  }
+
+  if (!/^[a-z\s]+$/.test(normalized)) {
+    return false;
+  }
+
+  const compact = normalized.replace(/\s+/g, '');
+
+  if (compact.length < 6 || normalized.split(/\s+/).length > 3) {
+    return false;
+  }
+
+  const consonantCount = (compact.match(/[bcdfghjklmnpqrstvwxyz]/g) || []).length;
+  const vowelCount = (compact.match(/[aeiou]/g) || []).length;
+  const hasKeyboardMashPattern = /(asdf|qwer|zxcv|xcvb|cvbn|sdfg|dfgh|fghj|ghjk|hjkl|poiuy|lkjh|mnbv)/.test(compact);
+  const hasLongConsonantRun = /[bcdfghjklmnpqrstvwxyz]{4,}/.test(compact);
+  const hasRepeatedCharacterRun = /(.)\1{3,}/.test(compact);
+  const isConsonantHeavy = consonantCount / compact.length >= 0.7;
+
+  return hasKeyboardMashPattern || hasRepeatedCharacterRun || (isConsonantHeavy && (vowelCount <= 2 || hasLongConsonantRun));
+}
+
 function startDashboardServer() {
   const dashboardServer = createServer(async (request, response) => {
     const requestUrl = new URL(request.url || '/', `http://${dashboardHost}:${dashboardPort}`);
@@ -2041,18 +2068,36 @@ client.on('messageCreate', async (message) => {
     return;
   }
 
-  const containsJulianTrigger = message.guild && /\bjulian\b/i.test(message.content);
+  const containsJulianTrigger = message.guild && /\b(julian|gully|jelen|jelan|jully\s+poo|julan|jully)\b/i.test(message.content);
+  const containsBabyGirlTrigger = message.guild && /\bbaby girl\b/i.test(message.content);
+  const containsGibberishTrigger = message.guild && isLikelyGibberishText(message.content);
 
   console.log(
     `Received message in ${message.guild?.name || 'DM'} / #${message.channel?.isTextBased() && 'name' in message.channel ? message.channel.name : 'unknown'} from ${message.author.tag}`
   );
 
   try {
-    if (containsJulianTrigger && message.channel?.isTextBased()) {
-      await Promise.allSettled([
-        message.react('🇵🇸'),
-        message.channel.send('julian')
-      ]);
+    if (message.channel?.isTextBased()) {
+      const triggerActions = [];
+
+      if (containsJulianTrigger) {
+        triggerActions.push(
+          message.react('🇵🇸'),
+          message.channel.send('julian')
+        );
+      }
+
+      if (containsBabyGirlTrigger) {
+        triggerActions.push(message.channel.send('the one and only 😘'));
+      }
+
+      if (containsGibberishTrigger) {
+        triggerActions.push(message.channel.send('watisthat'));
+      }
+
+      if (triggerActions.length > 0) {
+        await Promise.allSettled(triggerActions);
+      }
     }
 
     await initializeGoogleSheets();
