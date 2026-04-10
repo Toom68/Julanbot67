@@ -69,6 +69,7 @@ const peopleRowIndexByUserId = new Map();
 const peopleDataByUserId = new Map();
 const knowledgeSignatures = new Set();
 const recentlyProcessedMessageIds = new Map();
+const julianTriggerReplyTimestamps = [];
 let googleInitializationPromise;
 const dashboardPort = Number(process.env.PORT || process.env.DASHBOARD_PORT || 3001);
 const dashboardHost = process.env.DASHBOARD_HOST || '0.0.0.0';
@@ -1374,6 +1375,7 @@ async function registerJulianCommand(readyClient) {
 }
 
 async function scanRecentMessagesForKnowledge(channel) {
+  await initializeGoogleSheets();
   const fetchedMessages = await channel.messages.fetch({ limit: 10 });
   const messages = [...fetchedMessages.values()]
     .filter((message) => !message.author.bot)
@@ -2082,7 +2084,7 @@ client.on('messageCreate', async (message) => {
       let replyText = '';
 
       if (containsJulianTrigger) {
-        replyText = 'julian';
+        replyText = shouldRateLimitJulianTrigger() ? 'bro u ratelimiting julian bu' : 'julian';
         triggerActions.push(message.react('🇵🇸'));
       } else if (containsBabyGirlTrigger) {
         replyText = 'the one and only 😘';
