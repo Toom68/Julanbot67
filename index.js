@@ -1772,29 +1772,29 @@ function normalizeAssetPath(pathname) {
   return sanitizedPath;
 }
 
-function sendJson(response, statusCode, payload) {
+function sendJson(response, statusCode, payload, includeBody = true) {
   response.writeHead(statusCode, {
     'Content-Type': 'application/json; charset=utf-8'
   });
-  response.end(JSON.stringify(payload));
+  response.end(includeBody ? JSON.stringify(payload) : undefined);
 }
 
-async function serveDashboardAsset(response, fileName, contentType) {
+async function serveDashboardAsset(response, fileName, contentType, includeBody = true) {
   try {
     const fileContents = await readFile(getDashboardAsset(fileName), 'utf8');
     response.writeHead(200, {
       'Content-Type': contentType
     });
-    response.end(fileContents);
+    response.end(includeBody ? fileContents : undefined);
   } catch {
     response.writeHead(404, {
       'Content-Type': 'text/plain; charset=utf-8'
     });
-    response.end('Not found');
+    response.end(includeBody ? 'Not found' : undefined);
   }
 }
 
-async function tryServeUiBuildAsset(response, pathname) {
+async function tryServeUiBuildAsset(response, pathname, includeBody = true) {
   const assetPath = normalizeAssetPath(pathname);
 
   if (!assetPath) {
@@ -1806,15 +1806,15 @@ async function tryServeUiBuildAsset(response, pathname) {
     response.writeHead(200, {
       'Content-Type': getContentType(assetPath)
     });
-    response.end(fileContents);
+    response.end(includeBody ? fileContents : undefined);
     return true;
   } catch {
     return false;
   }
 }
 
-async function serveDashboardApp(response, pathname) {
-  const servedUiAsset = pathname !== '/' && await tryServeUiBuildAsset(response, pathname);
+async function serveDashboardApp(response, pathname, includeBody = true) {
+  const servedUiAsset = pathname !== '/' && await tryServeUiBuildAsset(response, pathname, includeBody);
 
   if (servedUiAsset) {
     return;
@@ -1825,27 +1825,27 @@ async function serveDashboardApp(response, pathname) {
     response.writeHead(200, {
       'Content-Type': 'text/html; charset=utf-8'
     });
-    response.end(fileContents);
+    response.end(includeBody ? fileContents : undefined);
   } catch {
     if (pathname === '/') {
-      await serveDashboardAsset(response, 'index.html', 'text/html; charset=utf-8');
+      await serveDashboardAsset(response, 'index.html', 'text/html; charset=utf-8', includeBody);
       return;
     }
 
     if (pathname === '/styles.css') {
-      await serveDashboardAsset(response, 'styles.css', 'text/css; charset=utf-8');
+      await serveDashboardAsset(response, 'styles.css', 'text/css; charset=utf-8', includeBody);
       return;
     }
 
     if (pathname === '/app.js') {
-      await serveDashboardAsset(response, 'app.js', 'application/javascript; charset=utf-8');
+      await serveDashboardAsset(response, 'app.js', 'application/javascript; charset=utf-8', includeBody);
       return;
     }
 
     response.writeHead(404, {
       'Content-Type': 'text/plain; charset=utf-8'
     });
-    response.end('Not found');
+    response.end(includeBody ? 'Not found' : undefined);
   }
 }
 
@@ -1866,8 +1866,9 @@ function parseJsonEnv(envVarName) {
 function startDashboardServer() {
   const dashboardServer = createServer(async (request, response) => {
     const requestUrl = new URL(request.url || '/', `http://${dashboardHost}:${dashboardPort}`);
+    const includeBody = request.method !== 'HEAD';
 
-    if (request.method !== 'GET') {
+    if (request.method !== 'GET' && request.method !== 'HEAD') {
       response.writeHead(405, {
         'Content-Type': 'text/plain; charset=utf-8'
       });
@@ -1877,19 +1878,19 @@ function startDashboardServer() {
 
     try {
       if (!requestUrl.pathname.startsWith('/api/')) {
-        await serveDashboardApp(response, requestUrl.pathname);
+        await serveDashboardApp(response, requestUrl.pathname, includeBody);
         return;
       }
 
       if (requestUrl.pathname === '/api/messages') {
         const { messages, threads } = await getThreadedMessagesForDashboard();
-        sendJson(response, 200, { messages, threads });
+        sendJson(response, 200, { messages, threads }, includeBody);
         return;
       }
 
       if (requestUrl.pathname === '/api/people') {
         const people = await getPeopleForDashboard();
-        sendJson(response, 200, { people });
+        sendJson(response, 200, { people }, includeBody);
         return;
       }
 
@@ -1900,23 +1901,23 @@ function startDashboardServer() {
         if (!profile) {
           sendJson(response, 404, {
             error: 'Person not found'
-          });
+          }, includeBody);
           return;
         }
 
-        sendJson(response, 200, profile);
+        sendJson(response, 200, profile, includeBody);
         return;
       }
 
       if (requestUrl.pathname === '/api/knowledge') {
         const knowledge = await getKnowledgeForDashboard();
-        sendJson(response, 200, { knowledge });
+        sendJson(response, 200, { knowledge }, includeBody);
         return;
       }
 
       if (requestUrl.pathname === '/api/julian-scans') {
         const scans = await getJulianScansForDashboard();
-        sendJson(response, 200, { scans });
+        sendJson(response, 200, { scans }, includeBody);
         return;
       }
 
@@ -1928,19 +1929,19 @@ function startDashboardServer() {
           knowledgeSheetName,
           julianScansSheetName,
           dashboardPort
-        });
+        }, includeBody);
         return;
       }
 
       response.writeHead(404, {
         'Content-Type': 'text/plain; charset=utf-8'
       });
-      response.end('Not found');
+      response.end(includeBody ? 'Not found' : undefined);
     } catch (error) {
       console.error('Dashboard request failed:', error);
       sendJson(response, 500, {
         error: 'Dashboard request failed'
-      });
+      }, includeBody);
     }
   });
 
