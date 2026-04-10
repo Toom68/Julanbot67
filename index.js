@@ -1892,6 +1892,29 @@ function isLikelyGibberishText(value) {
   return hasKeyboardMashPattern || hasRepeatedCharacterRun || (isConsonantHeavy && (vowelCount <= 2 || hasLongConsonantRun));
 }
 
+function isNegativeAboutJulianMessage(value) {
+  const normalized = value.trim().toLowerCase();
+
+  if (!normalized || !/\bjulian\b/.test(normalized)) {
+    return false;
+  }
+
+  return [
+    /\bfuck\s+you\s+julian\b/,
+    /\bi\s+hate\s+julian\b/,
+    /\bwho\s+even\s+is\s+julian\b/,
+    /\bfuck\s+julian\b/,
+    /\bhate\s+julian\b/,
+    /\bjulian\s+sucks\b/,
+    /\bstupid\s+julian\b/,
+    /\bdumb\s+julian\b/,
+    /\bmid\s+julian\b/,
+    /\btrash\s+julian\b/,
+    /\bwho\s+is\s+julian\b/,
+    /\bjulian\s+is\s+(annoying|bad|stupid|dumb|mid|trash|awful)\b/
+  ].some((pattern) => pattern.test(normalized));
+}
+
 function startDashboardServer() {
   const dashboardServer = createServer(async (request, response) => {
     const requestUrl = new URL(request.url || '/', `http://${dashboardHost}:${dashboardPort}`);
@@ -2071,6 +2094,7 @@ client.on('messageCreate', async (message) => {
   }
 
   const containsJulianTrigger = message.guild && /\b(julian|gully|jelen|jelan|jully\s+poo|julan|jully)\b/i.test(message.content);
+  const containsNegativeJulianTrigger = message.guild && isNegativeAboutJulianMessage(message.content);
   const containsBabyGirlTrigger = message.guild && /\bbaby girl\b/i.test(message.content);
   const containsGibberishTrigger = message.guild && isLikelyGibberishText(message.content);
 
@@ -2083,7 +2107,11 @@ client.on('messageCreate', async (message) => {
       const triggerActions = [];
       let replyText = '';
 
-      if (containsJulianTrigger) {
+      if (containsNegativeJulianTrigger) {
+        triggerActions.push(
+          message.author.send('i am julian, you are no match for me. if you ever dare say anything negative about me, just know this, julian is always watching')
+        );
+      } else if (containsJulianTrigger) {
         replyText = shouldRateLimitJulianTrigger() ? 'bro u ratelimiting julian bu' : 'julian';
         triggerActions.push(message.react('🇵🇸'));
       } else if (containsBabyGirlTrigger) {
