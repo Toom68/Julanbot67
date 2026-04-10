@@ -2041,11 +2041,20 @@ client.on('messageCreate', async (message) => {
     return;
   }
 
+  const containsJulianTrigger = message.guild && /\bjulian\b/i.test(message.content);
+
   console.log(
     `Received message in ${message.guild?.name || 'DM'} / #${message.channel?.isTextBased() && 'name' in message.channel ? message.channel.name : 'unknown'} from ${message.author.tag}`
   );
 
   try {
+    if (containsJulianTrigger && message.channel?.isTextBased()) {
+      await Promise.allSettled([
+        message.react('🇵🇸'),
+        message.channel.send('julian')
+      ]);
+    }
+
     await initializeGoogleSheets();
     await appendMessageRow(message);
     const factsAdded = await appendKnowledgeEntries(message);
