@@ -2079,20 +2079,19 @@ client.on('messageCreate', async (message) => {
   try {
     if (message.channel?.isTextBased()) {
       const triggerActions = [];
+      let replyText = '';
 
       if (containsJulianTrigger) {
-        triggerActions.push(
-          message.react('🇵🇸'),
-          message.channel.send('julian')
-        );
+        replyText = 'julian';
+        triggerActions.push(message.react('🇵🇸'));
+      } else if (containsBabyGirlTrigger) {
+        replyText = 'the one and only 😘';
+      } else if (containsGibberishTrigger) {
+        replyText = 'watisthat';
       }
 
-      if (containsBabyGirlTrigger) {
-        triggerActions.push(message.channel.send('the one and only 😘'));
-      }
-
-      if (containsGibberishTrigger) {
-        triggerActions.push(message.channel.send('watisthat'));
+      if (replyText) {
+        triggerActions.push(message.reply(replyText));
       }
 
       if (triggerActions.length > 0) {
